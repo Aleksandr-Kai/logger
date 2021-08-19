@@ -50,6 +50,12 @@ type LogLevel uint8
 
 var globalLogger = NewLogger()
 
+type Logger interface {
+	GlobalLevel(lvl LogLevel)
+	LogToFile(message string, args ...interface{})
+	LogToConsole(level LogLevel, message string, args ...interface{})
+}
+
 type logger struct {
 	file      *os.File
 	mutex     sync.Mutex
@@ -74,11 +80,11 @@ func createLogFile() *os.File {
 	return file
 }
 
-func NewLogger() *logger {
+func NewLogger() Logger {
 	return &logger{file: nil, writer: nil, mutex: sync.Mutex{}, globalLvl: Debug}
 }
 
-// Set max LogLevel which can be printed to console
+// GlobalLevel set max LogLevel which can be printed to console
 func (p *logger) GlobalLevel(lvl LogLevel) {
 	p.globalLvl = lvl
 }
@@ -118,7 +124,7 @@ func (p *logger) LogToConsole(level LogLevel, message string, args ...interface{
 	if p.globalLvl < level {
 		return
 	}
-	pc, _, l, _ := runtime.Caller(1)
+	pc, _, l, _ := runtime.Caller(2)
 
 	var marker string
 	var msgColor string
@@ -170,8 +176,8 @@ func (p *logger) LogToConsole(level LogLevel, message string, args ...interface{
 	fmt.Print(ColorReset)
 }
 
-func SetGlobalLevel(lvl LogLevel){
-	globalLogger.globalLvl = lvl
+func SetGlobalLevel(lvl LogLevel) {
+	globalLogger.GlobalLevel(lvl)
 }
 
 func LogToConsole(level LogLevel, message string, args ...interface{}) {
