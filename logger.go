@@ -1,3 +1,4 @@
+// Package logger v1.2
 package logger
 
 import (
@@ -54,6 +55,7 @@ type Logger interface {
 	GlobalLevel(lvl LogLevel)
 	LogToFile(message string, args ...interface{})
 	LogToConsole(level LogLevel, message string, args ...interface{})
+	GetText(level LogLevel, message string, args ...interface{}) string
 }
 
 type logger struct {
@@ -124,7 +126,10 @@ func (p *logger) LogToConsole(level LogLevel, message string, args ...interface{
 	if p.globalLvl < level {
 		return
 	}
-	pc, _, l, _ := runtime.Caller(2)
+	fmt.Println(p.GetText(level, message, args...))
+}
+func (p *logger) GetText(level LogLevel, message string, args ...interface{}) string {
+	pc, _, l, _ := runtime.Caller(3)
 
 	var marker string
 	var msgColor string
@@ -163,17 +168,15 @@ func (p *logger) LogToConsole(level LogLevel, message string, args ...interface{
 
 	str := ColorReset
 	for _, arg := range args {
-		str += fmt.Sprintf("%s%v%s\t", argsColor, arg, ColorReset)
+		str += fmt.Sprintf("%s%v%s   ", argsColor, arg, ColorReset)
 	}
 	str = strings.Replace(str, "\n", "\n\t", -1)
 
-	fmt.Println(ColorWhite+time.Now().Format("15:04:05.000000"),
+	return fmt.Sprintf("%s %s %s   %s   %s", ColorWhite+time.Now().Format("15:04:05.000000"),
 		marker,
-		msgColor, message, ColorReset,
-		argsColor, str, ColorReset,
-		finfo)
-	//fmt.Println("\n\n", getWidth(), " \\ ", runewidth.StringWidth(strFull), "\n\n")
-	fmt.Print(ColorReset)
+		msgColor+message+ColorReset,
+		str,
+		finfo+ColorReset)
 }
 
 func SetGlobalLevel(lvl LogLevel) {
