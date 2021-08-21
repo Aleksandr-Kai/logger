@@ -1,4 +1,4 @@
-// Package logger v1.2
+// Package logger v1.3
 package logger
 
 import (
@@ -129,6 +129,9 @@ func (p *logger) LogToConsole(level LogLevel, message string, args ...interface{
 	fmt.Println(p.GetText(level, message, args...))
 }
 func (p *logger) GetText(level LogLevel, message string, args ...interface{}) string {
+	if p.globalLvl < level {
+		return ""
+	}
 	pc, _, l, _ := runtime.Caller(3)
 
 	var marker string
