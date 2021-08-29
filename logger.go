@@ -52,7 +52,6 @@ var globalLogger = NewLogger()
 
 type Logger interface {
 	GlobalLevel(lvl LogLevel)
-	GlobalLevelString(lvl string)
 	LogToFile(message string, args ...interface{})
 	LogToConsole(level LogLevel, message string, args ...interface{})
 	GetText(level LogLevel, message string, args ...interface{}) string
@@ -89,27 +88,6 @@ func NewLogger() Logger {
 // GlobalLevel set max LogLevel which can be printed to console
 func (p *logger) GlobalLevel(lvl LogLevel) {
 	p.globalLvl = lvl
-}
-
-func (p *logger) GlobalLevelString(lvl string) {
-	var l LogLevel
-	switch lvl {
-	case "debug":
-		l = Debug
-	case "text":
-		l = Text
-	case "info":
-		l = Info
-	case "warning":
-		l = Warning
-	case "error":
-		l = Error
-	case "fatal":
-		l = Fatal
-	default:
-		l = Text
-	}
-	p.globalLvl = l
 }
 
 func (p *logger) LogToFile(message string, args ...interface{}) {
@@ -207,8 +185,23 @@ func SetGlobalLevel(lvl LogLevel) {
 	globalLogger.GlobalLevel(lvl)
 }
 
-func SetGlobalLevelString(lvl string) {
-	globalLogger.GlobalLevelString(lvl)
+func ParseLevel(lvl string) LogLevel {
+	switch lvl {
+	case "debug":
+		return Debug
+	case "text":
+		return Text
+	case "info":
+		return Info
+	case "warning":
+		return Warning
+	case "error":
+		return Error
+	case "fatal":
+		return Fatal
+	default:
+		return Text
+	}
 }
 
 func LogToConsole(level LogLevel, message string, args ...interface{}) {
