@@ -1,4 +1,3 @@
-// Package logger v1.3
 package logger
 
 import (
