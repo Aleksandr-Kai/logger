@@ -52,7 +52,7 @@ const (
 
 type LogLevel uint8
 
-var globalLogger = New()
+var globalLogger = New(Debug)
 
 type Logger interface {
 	GlobalLevel(lvl LogLevel)
@@ -96,8 +96,8 @@ func createLogFile() *os.File {
 	return file
 }
 
-func New() Logger {
-	return &logger{file: nil, writer: nil, mutex: sync.Mutex{}, globalLvl: Debug}
+func New(lvl LogLevel) Logger {
+	return &logger{file: nil, writer: nil, mutex: sync.Mutex{}, globalLvl: lvl}
 }
 
 // GlobalLevel set max LogLevel which can be printed to console
