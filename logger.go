@@ -52,7 +52,10 @@ const (
 
 type LogLevel uint8
 
-var globalLogger = New()
+var (
+	globalLogger = New()
+	globalLvl    = Debug
+)
 
 type Logger interface {
 	GlobalLevel(lvl LogLevel)
@@ -72,12 +75,12 @@ type Logger interface {
 }
 
 type logger struct {
-	file      *os.File
-	mutex     sync.Mutex
-	writer    io.Writer
-	curr      time.Time
-	globalLvl LogLevel
-	inline    bool
+	file   *os.File
+	mutex  sync.Mutex
+	writer io.Writer
+	curr   time.Time
+	//globalLvl LogLevel
+	inline bool
 }
 
 func createLogFile() *os.File {
@@ -97,12 +100,12 @@ func createLogFile() *os.File {
 }
 
 func New() Logger {
-	return &logger{file: nil, writer: nil, mutex: sync.Mutex{}, globalLvl: Debug}
+	return &logger{file: nil, writer: nil, mutex: sync.Mutex{} /*, globalLvl: Debug*/}
 }
 
 // GlobalLevel set max LogLevel which can be printed to console
 func (p *logger) GlobalLevel(lvl LogLevel) {
-	p.globalLvl = lvl
+	globalLvl = lvl
 }
 
 func (p *logger) ToFile(message string, args ...interface{}) {
@@ -137,7 +140,7 @@ func (p *logger) ToFile(message string, args ...interface{}) {
 }
 
 func (p *logger) logToConsole(level LogLevel, message string, args ...interface{}) {
-	if p.globalLvl < level {
+	if globalLvl < level {
 		return
 	}
 	if p.inline {
@@ -155,7 +158,7 @@ func (p *logger) logToConsole(level LogLevel, message string, args ...interface{
 }
 
 func (p *logger) GetText(level LogLevel, message string, args ...interface{}) string {
-	if p.globalLvl < level {
+	if globalLvl < level {
 		return ""
 	}
 	pc, _, l, _ := runtime.Caller(3)
