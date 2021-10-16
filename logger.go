@@ -48,13 +48,20 @@ const (
 
 type LogLevel uint8
 
-var globalLogger = NewLogger()
+var globalLogger = New()
 
 type Logger interface {
 	GlobalLevel(lvl LogLevel)
-	LogToFile(message string, args ...interface{})
-	LogToConsole(level LogLevel, message string, args ...interface{})
+	ToFile(message string, args ...interface{})
+	logToConsole(level LogLevel, message string, args ...interface{})
 	GetText(level LogLevel, message string, args ...interface{}) string
+
+	Fatal(message string, args ...interface{})
+	Error(message string, args ...interface{})
+	Warning(message string, args ...interface{})
+	Info(message string, args ...interface{})
+	Text(message string, args ...interface{})
+	Debug(message string, args ...interface{})
 }
 
 type logger struct {
@@ -70,7 +77,7 @@ func createLogFile() *os.File {
 	if _, err := os.Stat(logPath); os.IsNotExist(err) {
 		e := os.Mkdir(logPath, os.ModePerm)
 		if e != nil {
-			globalLogger.LogToConsole(Fatal, e.Error())
+			globalLogger.logToConsole(Fatal, e.Error())
 			return nil
 		}
 	}
@@ -81,7 +88,7 @@ func createLogFile() *os.File {
 	return file
 }
 
-func NewLogger() Logger {
+func New() Logger {
 	return &logger{file: nil, writer: nil, mutex: sync.Mutex{}, globalLvl: Debug}
 }
 
@@ -90,7 +97,7 @@ func (p *logger) GlobalLevel(lvl LogLevel) {
 	p.globalLvl = lvl
 }
 
-func (p *logger) LogToFile(message string, args ...interface{}) {
+func (p *logger) ToFile(message string, args ...interface{}) {
 	if p.file == nil {
 		p.file = createLogFile()
 		if p.file == nil {
@@ -121,12 +128,13 @@ func (p *logger) LogToFile(message string, args ...interface{}) {
 	p.mutex.Unlock()
 }
 
-func (p *logger) LogToConsole(level LogLevel, message string, args ...interface{}) {
+func (p *logger) logToConsole(level LogLevel, message string, args ...interface{}) {
 	if p.globalLvl < level {
 		return
 	}
 	fmt.Println(p.GetText(level, message, args...))
 }
+
 func (p *logger) GetText(level LogLevel, message string, args ...interface{}) string {
 	if p.globalLvl < level {
 		return ""
@@ -136,6 +144,7 @@ func (p *logger) GetText(level LogLevel, message string, args ...interface{}) st
 	var marker string
 	var msgColor string
 	var argsColor string
+	timeStamp := ColorWhite + time.Now().Format("15:04:05.000000")
 	finfo := fmt.Sprint(ColorWhite, runtime.FuncForPC(pc).Name(), " [", l, "]")
 	switch level {
 	case Fatal:
@@ -164,6 +173,7 @@ func (p *logger) GetText(level LogLevel, message string, args ...interface{}) st
 		msgColor = ColorReset + ColorBlue
 		argsColor = ColorReset + ColorWhite
 		finfo = ""
+		timeStamp = ""
 	default:
 		marker = ColorDefault + "---"
 	}
@@ -174,11 +184,36 @@ func (p *logger) GetText(level LogLevel, message string, args ...interface{}) st
 	}
 	str = strings.Replace(str, "\n", "\n\t", -1)
 
-	return fmt.Sprintf("%s %s %s   %s   %s", ColorWhite+time.Now().Format("15:04:05.000000"),
+	return fmt.Sprintf("%s %s %s   %s   %s",
+		timeStamp,
 		marker,
 		msgColor+message+ColorReset,
 		str,
 		finfo+ColorReset)
+}
+
+func (p *logger) Debug(message string, args ...interface{}) {
+	p.logToConsole(Debug, message, args...)
+}
+
+func (p *logger) Text(message string, args ...interface{}) {
+	p.logToConsole(Text, message, args...)
+}
+
+func (p *logger) Info(message string, args ...interface{}) {
+	p.logToConsole(Info, message, args...)
+}
+
+func (p *logger) Warning(message string, args ...interface{}) {
+	p.logToConsole(Warning, message, args...)
+}
+
+func (p *logger) Error(message string, args ...interface{}) {
+	p.logToConsole(Error, message, args...)
+}
+
+func (p *logger) Fatal(message string, args ...interface{}) {
+	p.logToConsole(Fatal, message, args...)
 }
 
 func SetGlobalLevel(lvl LogLevel) {
@@ -205,9 +240,9 @@ func ParseLevel(lvl string) LogLevel {
 }
 
 func LogToConsole(level LogLevel, message string, args ...interface{}) {
-	globalLogger.LogToConsole(level, message, args...)
+	globalLogger.logToConsole(level, message, args...)
 }
 
 func LogToFile(message string, args ...interface{}) {
-	globalLogger.LogToFile(message, args...)
+	globalLogger.ToFile(message, args...)
 }
