@@ -2,12 +2,15 @@ package logger
 
 import (
 	"fmt"
+	"github.com/mattn/go-runewidth"
 	"io"
 	"os"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
+	"unsafe"
 )
 
 const (
@@ -62,6 +65,9 @@ type Logger interface {
 	Info(message string, args ...interface{})
 	Text(message string, args ...interface{})
 	Debug(message string, args ...interface{})
+
+	StartInline()
+	StopInline()
 }
 
 type logger struct {
@@ -70,6 +76,7 @@ type logger struct {
 	writer    io.Writer
 	curr      time.Time
 	globalLvl LogLevel
+	inline    bool
 }
 
 func createLogFile() *os.File {
@@ -132,7 +139,18 @@ func (p *logger) logToConsole(level LogLevel, message string, args ...interface{
 	if p.globalLvl < level {
 		return
 	}
-	fmt.Println(p.GetText(level, message, args...))
+	if p.inline {
+		str := strings.Builder{}
+		str.WriteString("\r")
+		pbwidth := getWidth()
+		for runewidth.StringWidth(str.String()) < pbwidth {
+			str.WriteString(" ")
+		}
+		fmt.Print(str.String())
+		fmt.Print("\r" + p.GetText(level, message, args...))
+	} else {
+		fmt.Println(p.GetText(level, message, args...))
+	}
 }
 
 func (p *logger) GetText(level LogLevel, message string, args ...interface{}) string {
@@ -216,6 +234,15 @@ func (p *logger) Fatal(message string, args ...interface{}) {
 	p.logToConsole(Fatal, message, args...)
 }
 
+func (p *logger) StartInline() {
+	p.inline = true
+}
+
+func (p *logger) StopInline() {
+	p.inline = false
+	fmt.Println()
+}
+
 func SetGlobalLevel(lvl LogLevel) {
 	globalLogger.GlobalLevel(lvl)
 }
@@ -245,4 +272,24 @@ func LogToConsole(level LogLevel, message string, args ...interface{}) {
 
 func LogToFile(message string, args ...interface{}) {
 	globalLogger.ToFile(message, args...)
+}
+
+type winsize struct {
+	Row    uint16
+	Col    uint16
+	Xpixel uint16
+	Ypixel uint16
+}
+
+func getWidth() int {
+	ws := &winsize{}
+	retCode, _, errno := syscall.Syscall(syscall.SYS_IOCTL,
+		uintptr(syscall.Stdin),
+		uintptr(syscall.TIOCGWINSZ),
+		uintptr(unsafe.Pointer(ws)))
+
+	if int(retCode) == -1 {
+		panic(errno)
+	}
+	return int(ws.Col)
 }
