@@ -2,7 +2,6 @@ package logger
 
 import (
 	"fmt"
-	"github.com/mattn/go-runewidth"
 	"io"
 	"os"
 	"runtime"
@@ -11,6 +10,8 @@ import (
 	"syscall"
 	"time"
 	"unsafe"
+
+	"github.com/mattn/go-runewidth"
 )
 
 const (
