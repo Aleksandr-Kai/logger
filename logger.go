@@ -150,7 +150,7 @@ func (p *logger) logToConsole(level LogLevel, message string, args ...interface{
 		fmt.Print(str.String())
 		fmt.Print("\r" + p.GetText(level, message, args...))
 	} else {
-		fmt.Println(p.GetText(level, message, args...))
+		fmt.Print(p.GetText(level, message, args...))
 	}
 }
 
@@ -241,7 +241,7 @@ func (p *logger) StartInline() {
 
 func (p *logger) StopInline() {
 	p.inline = false
-	fmt.Println()
+	//fmt.Println()
 }
 
 func SetGlobalLevel(lvl LogLevel) {
