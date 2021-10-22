@@ -150,7 +150,7 @@ func (p *logger) logToConsole(level LogLevel, message string, args ...interface{
 		fmt.Print(str.String())
 		fmt.Print("\r" + p.GetText(level, message, args...))
 	} else {
-		fmt.Print(p.GetText(level, message, args...))
+		fmt.Print("\n" + p.GetText(level, message, args...))
 	}
 }
 
