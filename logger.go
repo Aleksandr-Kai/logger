@@ -113,7 +113,7 @@ func (p *logger) ToFile(message string, args ...interface{}) {
 		}
 		p.writer = p.file
 	}
-	pc, _, l, _ := runtime.Caller(1)
+	pc, _, l, _ := runtime.Caller(2)
 	str := ""
 	for _, arg := range args {
 		str += fmt.Sprintf(" [%v]", arg)
